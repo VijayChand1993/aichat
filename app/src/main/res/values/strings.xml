@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AI Chat</string>
+    <string name="accessibility_service_name">AccessCapture</string>
+    <string name="accessibility_service_description">Accessibility service used to capture visible text from foreground apps for personal use.</string>
+</resources>
