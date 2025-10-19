@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.annotation.RequiresApi
+import com.example.aichat.utils.TextProcessorFactory
 import java.security.MessageDigest
 
 @SuppressLint("AccessibilityPolicy")
@@ -62,23 +63,28 @@ class ChatAccessibilityService : AccessibilityService() {
     private fun captureActiveWindowAndSendResult() {
         try {
             val root = rootInActiveWindow
+            val appName = getForegroundAppPackageName()
             if (root == null) {
-                sendResult("(no root window available)")
+                sendResult("No App Found", "(no root window available)")
                 return
             }
             val texts = gatherVisibleText(root)
             val joined = if (texts.isEmpty()) "(no visible text found)" else texts.joinToString("\n\n---\n\n")
-            Log.i(TAG, "Captured text:$joined")
-            sendResult(joined)
+            // Log.i(TAG, "Captured text:$joined")
+            sendResult(appName, joined)
         } catch (ex: Exception) {
             Log.e(TAG, "Error during capture: ${ex.message}", ex)
-            sendResult("Error during capture: ${ex.message}")
+            sendResult("No App Found","Error during capture: ${ex.message}")
         }
     }
 
-    private fun sendResult(text: String) {
+    private fun sendResult(app: String, text: String) {
+        val processor = TextProcessorFactory.getProcessor(app)
+        val processedText = processor?.processText(text) ?: text
+
         val out = Intent(MainActivity.ACTION_CAPTURE_RESULT)
-        out.putExtra(MainActivity.EXTRA_CAPTURE_TEXT, text)
+        out.putExtra(MainActivity.EXTRA_CAPTURE_TEXT, processedText)
+        out.putExtra(MainActivity.APP_NAME, app)
         out.setPackage(packageName)
         sendBroadcast(out)
     }
@@ -126,5 +132,10 @@ class ChatAccessibilityService : AccessibilityService() {
                 .any { info -> info.resolveInfo.serviceInfo.packageName == ctx.packageName }
             return enabled
         }
+    }
+
+    private fun getForegroundAppPackageName(): String {
+        // Get the package name of the foreground app
+        return rootInActiveWindow?.packageName?.toString() ?: ""
     }
 }

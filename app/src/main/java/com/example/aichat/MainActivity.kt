@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         const val ACTION_REQUEST_CAPTURE = "com.example.aichat.ACTION_REQUEST_CAPTURE"
         const val ACTION_CAPTURE_RESULT = "com.example.aichat.ACTION_CAPTURE_RESULT"
         const val EXTRA_CAPTURE_TEXT = "capture_text"
+        const val APP_NAME = "app_name"
     }
 
     private val resultReceiver = object : BroadcastReceiver() {
@@ -31,7 +32,8 @@ class MainActivity : AppCompatActivity() {
             if (intent == null) return
             if (intent.action == ACTION_CAPTURE_RESULT) {
                 val text = intent.getStringExtra(EXTRA_CAPTURE_TEXT) ?: "(no text)"
-                Log.i(TAG, "Capture result received: $text")
+                val app = intent.getStringExtra(APP_NAME) ?: "(no app)"
+                Log.i(app, "Capture result received: $text")
                 tvResult.text = text
                 Toast.makeText(this@MainActivity, "Captured text received (check app)", Toast.LENGTH_SHORT).show()
             }
