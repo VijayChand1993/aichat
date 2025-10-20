@@ -9,15 +9,24 @@ import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.aichat.messageadapter.Message
+import com.example.aichat.messageadapter.MessagesAdapter
+
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
-    private lateinit var tvResult: TextView
-    private lateinit var btnCapture: Button
+    private lateinit var et: EditText
+    private lateinit var btnCapture: ImageButton
+    private lateinit var adapter: MessagesAdapter
+    private val messages = mutableListOf<Message>()
 
     // Broadcast action names (must match service)
     companion object {
@@ -34,18 +43,45 @@ class MainActivity : AppCompatActivity() {
                 val text = intent.getStringExtra(EXTRA_CAPTURE_TEXT) ?: "(no text)"
                 val app = intent.getStringExtra(APP_NAME) ?: "(no app)"
                 Log.i(app, "Capture result received: $text")
-                tvResult.text = text
-                Toast.makeText(this@MainActivity, "Captured text received (check app)", Toast.LENGTH_SHORT).show()
+                // et.text = text
+                et.setText(text)
+                bringAppToForeground()
+                // Toast.makeText(this@MainActivity, "Captured text received (check app)", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun bringAppToForeground() {
+        val intent = Intent(this@MainActivity, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        startActivity(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        tvResult = findViewById(R.id.tvResult)
+        et = findViewById(R.id.etMessage)
+        val btnSend = findViewById<ImageButton>(R.id.btnSend)
         btnCapture = findViewById(R.id.btnCapture)
+
+        adapter = MessagesAdapter(messages)
+        val rv = findViewById<RecyclerView>(R.id.rvMessages)
+        rv.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
+        rv.adapter = adapter
+
+        btnSend.setOnClickListener {
+            val text = et.text.toString().trim()
+            if (text.isNotEmpty()) {
+                // add local user message
+                val msg = Message(text, isSentByUser = true)
+                adapter.addMessage(msg)
+                rv.scrollToPosition(adapter.itemCount - 1)
+                et.setText("")
+
+                // TODO: send to ChatGPT / Gemini; when response returns:
+                // runOnUiThread { adapter.addMessage(Message(aiResponse, false)); rv.scrollToPosition(adapter.itemCount - 1) }
+            }
+        }
 
         btnCapture.setOnClickListener {
             // If accessibility service is not enabled, send user to settings
@@ -69,8 +105,12 @@ class MainActivity : AppCompatActivity() {
                 // Note: response will be via ACTION_CAPTURE_RESULT broadcast
             }, 5000L) // 350ms should be enough; increase if you see misses
         }
-    }
 
+
+        // Optional: prefill with sample messages
+        adapter.addMessage(Message("Sure, that sounds like a plan! When do you want to meet?", false))
+        adapter.addMessage(Message("You could respond with something like: \"Sure...\"", true))
+    }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
@@ -86,9 +126,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onPause() {
         // try { unregisterReceiver(resultReceiver) } catch (ex: Exception) {}
         super.onPause()
     }
 }
+

@@ -80,7 +80,8 @@ class ChatAccessibilityService : AccessibilityService() {
 
     private fun sendResult(app: String, text: String) {
         val processor = TextProcessorFactory.getProcessor(app)
-        val processedText = processor?.processText(text) ?: text
+        // val processedText = processor?.processText(text) ?: text
+        val processedText = text
 
         val out = Intent(MainActivity.ACTION_CAPTURE_RESULT)
         out.putExtra(MainActivity.EXTRA_CAPTURE_TEXT, processedText)
