@@ -44,6 +44,21 @@ class MessagesAdapter(private val items: MutableList<Message>) :
         notifyItemInserted(items.size - 1)
     }
 
+    fun updateMessageText(position: Int, newText: String) {
+        if (position in 0 until items.size) {
+            val existing = items[position]
+            items[position] = existing.copy(text = newText)
+            notifyItemChanged(position)
+        }
+    }
+
+    fun removeAt(position: Int) {
+        if (position in 0 until items.size) {
+            items.removeAt(position)
+            notifyItemRemoved(position)
+        }
+    }
+
     class LeftHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tv: TextView = itemView.findViewById(R.id.tvLeftMessage)
     }

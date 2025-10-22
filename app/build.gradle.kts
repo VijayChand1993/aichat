@@ -1,12 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
 
+// Load OPENAI_API_KEY from local.properties (not committed)
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val openaiKey: String = localProps.getProperty("OPENAI_API_KEY", "")
+
 android {
     namespace = "com.example.aichat"
     compileSdk {
         version = release(36)
+    }
+    // ENABLE buildConfig generation
+    buildFeatures {
+        buildConfig = true
     }
 
     defaultConfig {
@@ -17,6 +30,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Expose the key as a BuildConfig field for runtime use
+        buildConfigField("String", "OPENAI_API_KEY", "\"${openaiKey}\"")
     }
 
     buildTypes {

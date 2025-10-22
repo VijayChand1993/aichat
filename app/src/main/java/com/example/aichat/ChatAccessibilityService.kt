@@ -14,7 +14,6 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.annotation.RequiresApi
-import com.example.aichat.utils.TextProcessorFactory
 import java.security.MessageDigest
 
 @SuppressLint("AccessibilityPolicy")
@@ -79,8 +78,6 @@ class ChatAccessibilityService : AccessibilityService() {
     }
 
     private fun sendResult(app: String, text: String) {
-        val processor = TextProcessorFactory.getProcessor(app)
-        // val processedText = processor?.processText(text) ?: text
         val processedText = text
 
         val out = Intent(MainActivity.ACTION_CAPTURE_RESULT)

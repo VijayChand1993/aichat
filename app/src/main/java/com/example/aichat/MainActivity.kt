@@ -20,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.aichat.messageadapter.Message
 import com.example.aichat.messageadapter.MessagesAdapter
 
+import com.example.aichat.utils.OpenAIClient
+
+
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -78,8 +81,34 @@ class MainActivity : AppCompatActivity() {
                 rv.scrollToPosition(adapter.itemCount - 1)
                 et.setText("")
 
-                // TODO: send to ChatGPT / Gemini; when response returns:
-                // runOnUiThread { adapter.addMessage(Message(aiResponse, false)); rv.scrollToPosition(adapter.itemCount - 1) }
+                // Call OpenAI with the entered text and append the response to the chat
+                val apiKey = BuildConfig.OPENAI_API_KEY
+                if (apiKey.isBlank()) {
+                    Toast.makeText(this, "OpenAI API key missing. Add OPENAI_API_KEY in local.properties", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+
+                // Add typing indicator on the left while waiting for response
+                val typingMsg = Message("Typing…", isSentByUser = false)
+                adapter.addMessage(typingMsg)
+                val typingIndex = adapter.itemCount - 1
+                rv.scrollToPosition(typingIndex)
+
+                Thread {
+                    try {
+                        val aiText = OpenAIClient.chatCompletion(text, apiKey)
+                        runOnUiThread {
+                            adapter.updateMessageText(typingIndex, if (aiText.isNotBlank()) aiText else "(No response)")
+                            rv.scrollToPosition(adapter.itemCount - 1)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error calling OpenAI", e)
+                        runOnUiThread {
+                            adapter.updateMessageText(typingIndex, "(Error: ${e.localizedMessage})")
+                            Toast.makeText(this, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.start()
             }
         }
 
